@@ -39,5 +39,5 @@ all_data['click_min'] = all_data['clickTime'].apply(lambda x: str(x)[4:])
 
 print('Saving ...')
 joblib.dump(all_data, os.path.join('../processed', 'all_data_p1'))
-joblib.dump(instance_id, os.path.join('../processed', 'instance_id')
+joblib.dump(instance_id, os.path.join('../processed', 'instance_id'))
 
