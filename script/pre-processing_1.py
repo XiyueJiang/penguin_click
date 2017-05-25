@@ -46,9 +46,9 @@ id_columns = ['creativeID', 'positionID', 'adID', 'camgaignID',
 
 # plot_utils.plot_correlation_map(all_data[id_columns])
 
-all_data['site_position'] = np.add(all_data.sitesetID.values, all_data.positionType.values)
-all_data['app_id_platform'] = np.add(all_data.appID.values, all_data.appPlatform.values)
-all_data['advertiser_app_id'] = np.add(all_data.advertiserID.values, all_data.appID.values)
+all_data['site_position'] = np.add(all_data.sitesetID.values.astype('str'), all_data.positionType.values.astype('str'))
+all_data['app_id_platform'] = np.add(all_data.appID.values.astype('str'), all_data.appPlatform.values.astype('str'))
+all_data['advertiser_app_id'] = np.add(all_data.advertiserID.values.astype('str'), all_data.appID.values.astype('str'))
 
 
 print('Saving ...')
