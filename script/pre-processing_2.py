@@ -3,7 +3,8 @@
 import os
 
 import joblib
-import utils
+from script import utils
+
 
 all_data = joblib.load(os.path.join('../processed', 'all_data_p1'))
 
