@@ -10,9 +10,11 @@ from script import utils
 
 from pyspark import SparkContext, sql
 
+"""
 os.environ['PYSPARK_SUBMIT_ARGS']="--master local[*] pyspark-shell"
 sc = SparkContext('local[*]')
 spark = sql.SparkSession.builder.appName("").getOrCreate()
+"""
 
 
 train = pd.read_csv(os.path.join('../dataset', 'train.csv'))
@@ -54,28 +56,56 @@ id_columns = ['creativeID', 'positionID', 'adID', 'camgaignID',
 
 # plot_utils.plot_correlation_map(all_data[id_columns])
 
-all_data['site_position'] = np.add(all_data.sitesetID.values, all_data.positionType.values)
-all_data['app_id_platform'] = np.add(all_data.appID.values, all_data.appPlatform.values)
-all_data['advertiser_app_id'] = np.add(all_data.advertiserID.values, all_data.appID.values)
+all_data['site_position'] = np.add(all_data.sitesetID.astype('str').values, all_data.positionType.astype('str').values)
+all_data['app_id_platform'] = np.add(all_data.appID.astype('str').values, all_data.appPlatform.astype('str').values)
+all_data['advertiser_app_id'] = np.add(all_data.advertiserID.astype('str').values, all_data.appID.astype('str').values)
+
+all_data['site_position'] = all_data['site_position'].astype('category').values.codes
+all_data['app_id_platform'] = all_data['app_id_platform'].astype('category').values.codes
+all_data['advertiser_app_id'] = all_data['advertiser_app_id'].astype('category').values.codes
 
 
 # using group-by to check encode corr variables
-# plot_utils.plot_cate_bar(all_data.ix[all_data['label'] != -1], x='test', y='label', estimator=np.mean)
+plot_utils.plot_cate_bar(all_data.ix[(all_data['label'] != -1) & (all_data['diff_install_click'] > 0)], x='diff_install_click', y='label', estimator=np.mean)
 
 
 # installed app category
-print('Calculating installed app category ...')
+print('Counting installed app category ...')
+"""
 user_installedapps = spark.read.csv(os.path.join('../dataset', 'user_installedapps.csv'), header=True)
 app_categories = spark.read.csv(os.path.join('../dataset', 'app_categories.csv'), header=True)
 category_count = user_installedapps.join(app_categories, 'appID', 'left_outer').groupBy(['userID', 'appCategory']).count().toPandas()
+"""
+category_count = joblib.load(os.path.join('../processed', 'userid_app_category_count'))
+category_count['userID'] = category_count['userID'].astype(int)
+category_count['appCategory'] = category_count['appCategory'].astype(int)
+category_count['count'] = category_count['count'].astype(int)
+
+all_data = pd.merge(all_data, category_count, how='left', on=['userID', 'appCategory'])
+all_data.ix[pd.isnull(all_data['count']), 'count'] = 0
+
+# user app actions
+print('user app actions ...')
+actions = pd.read_csv(os.path.join('../dataset', 'user_app_actions.csv'))
+all_data = pd.merge(all_data, actions, how='left', on=['userID', 'appID'])
 
 
+all_data['install_day'] = all_data['installTime'].apply(lambda x: utils.extract_day(x))
+all_data['click_day'] = all_data['click_day'].astype(int)
+all_data['diff_install_click'] = all_data['install_day'] - all_data['click_day']
+all_data.ix[all_data['diff_install_click'] < 0] = 1
+all_data.ix[all_data['diff_install_click'] != 1] = 0
 
 
+# encode with mean respond
+print('encode with mean respond ...')
+vn_list = ['connectionType', 'creativeID', 'camgaignID',
+           'advertiser_app_id', 'app_id_platform', 'appCategory',
+           'site_position', 'hometown', 'residence']
 
 
-
-
+mean0 = all_data.ix[all_data['click_day'] < 31, 'label'].mean()
+utils.calc_exptv(all_data, vn_list, mean0)
 
 
 print('Saving ...')

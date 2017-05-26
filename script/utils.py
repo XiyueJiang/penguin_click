@@ -2,6 +2,7 @@
 
 from collections import defaultdict
 import numpy as np
+import pandas as pd
 
 
 def calc_exptv(df, vn_list, mean0):
@@ -19,7 +20,8 @@ def calc_exptv(df, vn_list, mean0):
 
         for day in range(17, 32):
 
-            day_expt[day] = {}
+            if day not in day_expt:
+                day_expt[day] = {}
 
             mask_prev = np.logical_and(df_copy0.click_day > day1, df_copy0.click_day <= day)
             mask_target = np.logical_and(df_copy0.click_day != day, df_copy0.click_day < 31)
@@ -55,4 +57,18 @@ def calc_exptv(df, vn_list, mean0):
 
         for day in range(17, 32):
             df.loc[df.click_day.values == day, vn_exp] = day_expt[day][vn]['exp']
+
+
+def extract_day(time):
+    try:
+        time = str(int(time))
+        if len(time) == 6:
+            day = int(time[:2])
+        else:
+            day = int(time[:1])
+    except:
+        day = None
+
+    return day
+
 
