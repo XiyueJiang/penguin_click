@@ -66,7 +66,7 @@ all_data['advertiser_app_id'] = all_data['advertiser_app_id'].astype('category')
 
 
 # using group-by to check encode corr variables
-plot_utils.plot_cate_bar(all_data.ix[(all_data['label'] != -1) & (all_data['diff_install_click'] > 0)], x='diff_install_click', y='label', estimator=np.mean)
+# plot_utils.plot_cate_bar(all_data.ix[(all_data['label'] != -1) & (all_data['diff_install_click'] > 0)], x='diff_install_click', y='label', estimator=np.mean)
 
 
 # installed app category
