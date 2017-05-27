@@ -59,6 +59,23 @@ def calc_exptv(df, vn_list, mean0):
             df.loc[df.click_day.values == day, vn_exp] = day_expt[day][vn]['exp']
 
 
+def calc_diff_day_category(df):
+
+    diff_df = []
+
+    for day_diff in range(1, 31):
+        filter_prev = np.logical_and(df.diff_day > 0, df.diff_day <= day_diff)
+        grp = df[filter_prev].groupby(['userID', 'appCategory', 'click_day'])['install_counts'].aggregate(np.sum).rename('diff_' + str(day_diff) + '_category')
+        diff_df.append(grp)
+
+    concat_df = pd.concat(diff_df, axis=1)
+    concat_df[pd.isnull(concat_df)] = 0
+
+    concat_df.reset_index(inplace=True)
+
+    return concat_df
+
+
 def extract_day(time):
     try:
         time = str(int(time))
