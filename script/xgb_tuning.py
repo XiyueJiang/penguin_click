@@ -4,11 +4,11 @@ import xgboost as xgb
 import numpy as np
 
 xgb_param = {'max_depth': 7, 'eta':.15, 'objective': 'binary:logistic', 'verbose':0,
-         'subsample': 1.0, 'min_child_weight':50, 'gamma': 0,
+         'subsample': 1.0, 'min_child_weight': 3, 'gamma': 0,
          'nthread': 16, 'colsample_bytree':.5, 'base_score': 0.12, 'seed': 999}
 
 
-def xgbCv(train, features, numRounds, eta, gamma, maxDepth, minChildWeight, subsample, colSample):
+def xgbCv(train, features, numRounds, eta, gamma, maxDepth, minChildWeight, colSample):
     # prepare xgb parameters
     params = {
         'objective':'binary:logistic',
@@ -19,7 +19,7 @@ def xgbCv(train, features, numRounds, eta, gamma, maxDepth, minChildWeight, subs
         "eta": eta,
         "max_depth": int(maxDepth),
         "min_child_weight": minChildWeight,
-        "subsample": subsample,
+        "subsample": 1,
         "colsample_bytree": colSample,
         "gamma": gamma
     }
@@ -31,17 +31,16 @@ def xgbCv(train, features, numRounds, eta, gamma, maxDepth, minChildWeight, subs
 
 def bayesOpt(train, features):
     ranges = {
-        'numRounds': (1000, 5000),
-        'eta': (0.001, 0.3),
+        'numRounds': (200, 2000),
+        'eta': (0.05, 0.3),
         'gamma': (0, 25),
-        'maxDepth': (1, 10),
+        'maxDepth': (5, 10),
         'minChildWeight': (0, 10),
-        'subsample': (0, 1),
         'colSample': (0, 1)
     }
 
     # proxy through a lambda to be able to pass train and features
-    optFunc = lambda numRounds, eta, gamma, maxDepth, minChildWeight, subsample, colSample: \
+    optFunc = lambda numRounds, eta, gamma, maxDepth, minChildWeight, colSample: \
         xgbCv(train, features, numRounds, eta, gamma, maxDepth, minChildWeight, subsample, colSample)
     bo = BayesianOptimization(optFunc, ranges)
     bo.maximize(init_points=50, n_iter=5, kappa=2, acq="ei", xi=0.0)
@@ -63,7 +62,7 @@ def kFoldValidation(train, features, xgbParams, numRounds,  target='label'):
         dvalid = xgb.DMatrix(X_valid, y_valid)
 
         watchlist = [(dtrain, 'train'), (dvalid, 'eval')]
-        gbm = xgb.train(xgbParams, dtrain, numRounds, evals=watchlist, early_stopping_rounds=100)
+        gbm = xgb.train(xgbParams, dtrain, numRounds, evals=watchlist, early_stopping_rounds=50)
 
         score = gbm.best_score
         fold_score.append(score)
