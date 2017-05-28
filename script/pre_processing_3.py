@@ -30,7 +30,6 @@ def main():
     utils.calc_exptv(all_data, vn_list, mean0)
 
     print('After exptv pair_interaction: ', all_data.shape)
-    print(all_data.head())
 
     print('Saving ...')
     joblib.dump(all_data, os.path.join('../processed', 'all_data_p2'))
