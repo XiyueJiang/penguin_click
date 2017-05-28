@@ -190,3 +190,8 @@ def pair_interaction(df, column_pairs):
         vn = '_'.join(pair)
         df[vn] = pair_c
         df[vn] = df[vn].astype('category').values.codes
+
+def generate_submission(df):
+    submission_path = "/mnt/trident/xiaolan/python/Contest/penguin_click/pred_output/" + time.strftime("%Y%m%d",time.gmtime())
+    os.system("mkdir " + submission_path)
+    df.to_csv(os.path.join(submission_path, 'submission.csv'), index=False)
