@@ -181,3 +181,12 @@ def extract_day(time):
     return day
 
 
+def pair_interaction(df, column_pairs):
+    for pair in column_pairs:
+        df0 = df.ix[:, pair].copy()
+        print('Combine: ', pair)
+        pair_c = np.add(df0[pair[0]].astype('str').values, df0[pair[1]].astype('str').values)
+
+        vn = '_'.join(pair)
+        df[vn] = pair_c
+        df[vn] = df[vn].astype('category').values.codes
