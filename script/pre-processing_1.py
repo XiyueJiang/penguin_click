@@ -123,7 +123,7 @@ print('After left-join day diff category, shape:', all_data.shape)
 print('encode with mean respond ...')
 vn_list = ['connectionType', 'creativeID', 'camgaignID',
            'advertiser_app_id', 'app_id_platform', 'appCategory',
-           'site_position', 'hometown', 'residence']
+           'site_position', 'hometown', 'residence', 'appID', 'positionID']
 
 
 mean0 = all_data.ix[all_data['click_day'] < 31, 'label'].mean()

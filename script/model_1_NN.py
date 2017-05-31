@@ -9,8 +9,8 @@ import os
 import joblib
 import numpy as np
 import pandas as pd
-
 import utils
+from sklearn.cross_validation import KFold, train_test_split
 
 
 def logloss(pred, y, weight=None):
@@ -61,38 +61,44 @@ def main():
     }
 
     model_n = 'xgb-tst3'
+    optimize = 0
 
     all_data = joblib.load(os.path.join('../processed', 'all_data_p2'))
     all_data.drop(['conversionTime', 'clickTime'], inplace=True, axis=1)
 
-    train_x = all_data.ix[all_data['click_day'] < 30, :].drop('label', axis=1)
-    train_y = all_data.ix[all_data['click_day'] < 30, 'label']
-
-    eval_x = all_data.ix[all_data['click_day'] == 30, :].drop('label', axis=1)
-    eval_y = all_data.ix[all_data['click_day'] == 30, 'label']
+    train_x = all_data.ix[all_data['click_day'] < 31, :].drop('label', axis=1)
+    train_y = all_data.ix[all_data['click_day'] < 31, 'label']
 
     test_x = all_data.ix[all_data['click_day'] == 31, :].drop('label', axis=1)
 
     n_bags = 1
     n_folds = 4
-    nn = train_x.shape[0]
-    np.random.seed(999)
-    folds = np.random.randint(0, n_folds, nn)
 
-    train_p = np.zeros((eval_x.shape[0], n_bags))
+    train_p = np.zeros((train_x.shape[0], n_bags))
     test_foldavg_p = np.zeros((test_x.shape[0], n_bags * n_folds))
     test_fulltrain_p = np.zeros((test_x.shape[0], n_bags))
 
     log_loss_list = []
 
-    for fold in range(n_folds):
+    if optimize:
+        opt_train_idx, opt_eval_idx = train_test_split(range(len(train_y)), test_size=0.2)
+
+        opt_train_x = train_x[opt_train_idx]
+        opt_train_y = train_y[opt_train_idx]
+
+        opt_eval_x = train_x[opt_eval_idx]
+        opt_eval_y = train_y[opt_eval_idx]
+
+        presets[model_n]['model'].optimize(opt_train_x, opt_train_y, opt_eval_x, opt_eval_y, presets[model_n]['param_grid'])
+
+    for fold, (fold_train_idx, fold_eval_idx) in enumerate(KFold(len(train_y), n_folds, shuffle=True, random_state=2017)):
 
         print("Training fold %d..." % fold)
-        fold_train_x = train_x[folds == fold]
-        fold_train_y = train_y[folds == fold]
+        fold_train_x = train_x[fold_train_idx]
+        fold_train_y = train_y[fold_train_idx]
 
-        fold_eval_x = eval_x
-        fold_eval_y = eval_y
+        fold_eval_x = train_x[fold_eval_idx]
+        fold_eval_y = train_y[fold_eval_idx]
 
         fold_test_x = test_x
 
@@ -124,7 +130,7 @@ def main():
             eval_p[:, bag] += pe
             test_foldavg_p[:, 0 * n_folds * n_bags + fold * n_bags + bag] = pt
 
-            train_p[:, bag] += pe
+            train_p[fold_eval_idx, bag] = pe
 
             print("    log-loss of validation: %.5f" % logloss(pe, fold_eval_y))
 
@@ -168,18 +174,18 @@ def main():
 
     # Aggregate predictions
     instance_id = joblib.load(os.path.join('../processed', 'instance_id'))
-    train_p = pd.Series(train_p.reshape(train_p.shape[0], ) / n_folds)  # eval
+    train_p = pd.Series(np.mean(train_p, axis=1))  # eval
     test_foldavg_p = pd.Series(np.mean(test_foldavg_p, axis=1), index=instance_id.values)  # fold-test-pre
     test_fulltrain_p = pd.Series(np.mean(test_fulltrain_p, axis=1), index=instance_id.values)  # full-test-pre
 
     # Analyze predictions
     log_loss_mean = np.mean(log_loss_list)
     log_loss_std = np.std(log_loss_list)
-    # log_loss = logloss(train_p, train_y)
+    log_loss = logloss(train_p, train_y)
 
     print()
     print("CV log loss: %.5f +- %.5f" % (log_loss_mean, log_loss_std))
-    # print("CV RES log loss: %.5f" % log_loss)
+    print("CV RES log loss: %.5f" % log_loss)
 
     print()
     print("Saving predictions... (%s)" % model_n)

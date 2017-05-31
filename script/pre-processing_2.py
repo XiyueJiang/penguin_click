@@ -4,7 +4,7 @@ import os
 
 import joblib
 
-from script import utils
+import utils
 
 
 def xgrfir():
@@ -13,14 +13,14 @@ def xgrfir():
     all_data.drop(['conversionTime', 'clickTime'], inplace=True, axis=1)
 
     presets = {
-        'xgb-tst': {
+        'xgb-tst2': {
             'model': utils.Xgb({
                 'max_depth': 7,
-                'eta': 0.1,
-                'colsample_bytree': 0.5,
-                'subsample': 0.95,
-                'min_child_weight': 5,
-            }, n_iter=400),
+                'eta': 0.0175,
+                'colsample_bytree': 0.7135,
+                'min_child_weight': 2.2,
+                'early_stopping_rounds': 50
+            }, n_iter=4100),
             'param_grid': {'colsample_bytree': [0.2, 1.0]},
         }
     }
@@ -34,7 +34,7 @@ def xgrfir():
     # high interaction by xgbfir
 
     print('xgbfi for feature interaction ...')
-    presets['xgb-tst']['model'].fit(X_train=train_x, y_train=train_y, feature_names=feature_names, name='xgb-tst', xgbfir_tag=1)
+    presets['xgb-tst2']['model'].fit(X_train=train_x, y_train=train_y, feature_names=feature_names, name='xgb-tst2', xgbfir_tag=1)
 
 
 if __name__ == '__main__':

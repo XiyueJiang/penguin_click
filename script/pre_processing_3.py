@@ -17,7 +17,10 @@ def main():
                     ('connectionType', 'app_id_platform'),
                     ('connectionType', 'positionType'),
                     ('connectionType', 'sitesetID'),
-                    ('app_id_platform', 'creativeID')]
+                    ('app_id_platform', 'creativeID'),
+                    ('appCategory', 'creativeID'),
+                    ('appCategory', 'connectionType_creativeID'),
+                    ('appCategory', 'connectionType_advertiser_app_id')]
 
     all_data = joblib.load(os.path.join('../processed', 'all_data_p1'))
     utils.pair_interaction(all_data, column_pairs)
