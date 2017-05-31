@@ -7,7 +7,9 @@ import pandas as pd
 import xgbfir
 import xgboost as xgb
 from bayes_opt import BayesianOptimization
+import os
 
+"""
 from keras.models import Sequential
 from keras.layers import Dense, Dropout
 from keras.layers.advanced_activations import PReLU
@@ -17,7 +19,7 @@ from keras.callbacks import ModelCheckpoint
 from keras import regularizers
 from sklearn.preprocessing import StandardScaler
 import scipy.sparse as sp
-import os
+"""
 
 
 class BaseAlgo(object):
@@ -30,7 +32,7 @@ class BaseAlgo(object):
         else:
             return self.predict(val[0]), self.predict(test[0])
 
-
+"""
 def batch_generator(X, y=None, batch_size=128, shuffle=False):
     index = np.arange(X.shape[0])
 
@@ -169,6 +171,8 @@ class Keras(BaseAlgo):
 
         return self.model.predict_generator(batch_generator(X, batch_size=800), val_samples=X.shape[0]).reshape((X.shape[0],))
 
+"""
+
 
 class Xgb(BaseAlgo):
 
@@ -186,7 +190,7 @@ class Xgb(BaseAlgo):
 
         self.n_iter = n_iter
 
-    def fit(self, X_train, y_train, X_eval=None, y_eval=None, seed=42, feature_names=None, name=None, xgbfir_tag=0):
+    def fit(self, X_train, y_train, X_eval=None, y_eval=None, seed=42, feature_names=None, name=None, xgbfir_tag=1, xgbfir_name=None):
 
         params = self.params.copy()
         params['seed'] = seed
@@ -209,7 +213,7 @@ class Xgb(BaseAlgo):
         print("    Feature importances: %s" % ', '.join('%s: %d' % t for t in sorted(self.model.get_fscore().items(), key=lambda t: -t[1])))
 
         if xgbfir_tag:
-            xgbfir.saveXgbFI(self.model, feature_names=self.feature_names, OutputXlsxFile='../processed/xgb-%s.xlx' % name)
+            xgbfir.saveXgbFI(self.model, feature_names=self.feature_names, OutputXlsxFile='../processed/xgb-%s-%s.xlsx' % (name, xgbfir_name))
 
     def predict(self, X):
         return self.model.predict(xgb.DMatrix(X, feature_names=self.feature_names))

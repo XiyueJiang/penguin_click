@@ -1,5 +1,9 @@
 # -*-coding:utf-8-*-
 
+# xgb-tst: CV log loss: 0.08584 +- 0.00070; train-logloss: 0.094392
+# xgb-tst2: CV log loss: 0.08590 +- 0.00052; train-logloss: 0.09337
+
+
 import os
 
 import joblib
@@ -19,20 +23,44 @@ def logloss(pred, y, weight=None):
 def main():
 
     presets = {
-        'xgb-tst': {
+        'xgb-tst1': {
             'model': utils.Xgb({
                 'max_depth': 7,
-                'eta': 0.15,
-                'colsample_bytree': 0.5,
-                'min_child_weight': 5,
+                'eta': 0.1343,
+                'colsample_bytree': 0.7135,
+                'min_child_weight': 2.2,
                 'early_stopping_rounds': 50,
-            }, n_iter=1200),
+            }, n_iter=500),
             'param_grid': {'colsample_bytree': [0.2, 1.0]}
         },
+        'xgb-tst2': {
+            'model': utils.Xgb({
+                'max_depth': 7,
+                'eta': 0.1343,
+                'colsample_bytree': 0.7135,
+                'min_child_weight': 2.2,
+                'early_stopping_rounds': 50,
+            }, n_iter=600),
+            'param_grid': {'colsample_bytree': [0.2, 1.0]}
+        },
+        'xgb-tst3': {
+            'model': utils.Xgb({
+                'max_depth': 7,
+                'eta': 0.0175,
+                'colsample_bytree': 0.7135,
+                'min_child_weight': 2.2,
+                'early_stopping_rounds': 50,
+            }, n_iter=4100),
+            'param_grid': {'colsample_bytree': [0.2, 1.0]}
+        },
+
         'nn-tst': {
             'model': utils.Keras(utils.nn_mlp, {'l1': 1e-3, 'l2': 1e-3, 'n_epoch': 1, 'batch_size': 128, 'layers': [10]}),
         },
+
     }
+
+    model_n = 'xgb-tst3'
 
     all_data = joblib.load(os.path.join('../processed', 'all_data_p2'))
     all_data.drop(['conversionTime', 'clickTime'], inplace=True, axis=1)
@@ -84,13 +112,14 @@ def main():
 
             bag_test_x = fold_test_x
 
-            pe, pt = presets['nn-tst']['model'].\
+            pe, pt = presets[model_n]['model'].\
                 fit_predict(train=(bag_train_x, bag_train_y),
                             val=(bag_eval_x, bag_eval_y),
                             test=(bag_test_x,),
                             seed=1314 + 1993 * fold + 114 * bag,
                             feature_names=fold_feature_names,
-                            name='%s-fold-%d-%d' % ('nn-tst', fold, bag))
+                            name='%s-fold-%d-%d' % (model_n, fold, bag),
+                            xgbfir_name=str(fold)+str(bag))
 
             eval_p[:, bag] += pe
             test_foldavg_p[:, 0 * n_folds * n_bags + fold * n_bags + bag] = pt
@@ -127,12 +156,13 @@ def main():
 
             bag_test_x = full_test_x
 
-            pt = presets['nn-tst']['model'].\
+            pt = presets[model_n]['model'].\
                 fit_predict(train=(bag_train_x, bag_train_y),
                             test=(bag_test_x,),
                             seed=1314 + 114 * bag,
                             feature_names=full_feature_names,
-                            name='%s-full-%d' % ('nn-tst', bag))
+                            name='%s-full-%d' % (model_n, bag),
+                            xgbfir_name=str(bag))
 
             test_fulltrain_p[:, bag] = pt
 
@@ -152,13 +182,14 @@ def main():
     # print("CV RES log loss: %.5f" % log_loss)
 
     print()
-    print("Saving predictions... (%s)" % 'nn-tst')
+    print("Saving predictions... (%s)" % model_n)
 
     for part, pred in [('train', train_p), ('test-foldavg', test_foldavg_p), ('test-fulltrain', test_fulltrain_p)]:
         pred.rename('loss', inplace=True)
         pred.index.rename('instance_id', inplace=True)
-        pred.to_csv('../preds/%s-%s.csv' % ('nn-tst', part), header=True)
+        pred.to_csv('../preds/%s-%s.csv' % (model_n, part), header=True)
 
 
 if __name__ == '__main__':
+
     main()
