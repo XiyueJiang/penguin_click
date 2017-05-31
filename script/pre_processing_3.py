@@ -20,7 +20,17 @@ def main():
                     ('app_id_platform', 'creativeID'),
                     ('appCategory', 'creativeID'),
                     ('appCategory', 'connectionType_creativeID'),
-                    ('appCategory', 'connectionType_advertiser_app_id')]
+                    ('appCategory', 'connectionType_advertiser_app_id'),
+                    ('positionID', 'creativeID'),
+                    ('positionID', 'age'),
+                    ('positionID', 'appCategory'),
+                    ('positionID', 'connectionType'),
+                    ('positionID', 'advertiserID'),
+                    ('campaignID', 'age'),
+                    ('appCategory', 'appID'),
+                    ('appCategory', 'sitesetID'),
+                    ('appCategory', 'advertiserID'),
+                    ('gender', 'creativeID')]
 
     all_data = joblib.load(os.path.join('../processed', 'all_data_p1'))
     utils.pair_interaction(all_data, column_pairs)
