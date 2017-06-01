@@ -121,13 +121,15 @@ print('After left-join day diff category, shape:', all_data.shape)
 
 # encode with mean respond
 print('encode with mean respond ...')
-vn_list = ['connectionType', 'creativeID', 'camgaignID',
+
+vn_list = ['creativeID', 'camgaignID',
            'advertiser_app_id', 'app_id_platform', 'appCategory',
            'site_position', 'hometown', 'residence', 'appID', 'positionID']
 
 
 mean0 = all_data.ix[all_data['click_day'] < 31, 'label'].mean()
-utils.calc_exptv(all_data, vn_list, mean0)
+utils.calc_exptv(all_data, ['connectionType'], mean0)
+utils.calc_exptv(all_data, vn_list)
 
 print('After calc_exptv, shape:', all_data.shape)
 

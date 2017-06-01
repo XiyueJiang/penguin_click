@@ -249,15 +249,19 @@ class Xgb(BaseAlgo):
         print("Best logloss: %.5f, params: %s" % (opt.res['max']['max_val'], opt.res['max']['max_params']))
 
 
-def calc_exptv(df, vn_list, mean0):
+def calc_exptv(df, vn_list, mean0=None):
 
-    mean0 = mean0
     day_expt = defaultdict()
     df_copy0 = df.ix[:, ['click_day', 'label']].copy()
     day1 = 16
     cred_k = 11
 
     for vn in vn_list:
+
+        if vn == 'connectionType':
+            mean0 = mean0
+        else:
+            mean0 = df.exptv_connectionType.values
 
         print('exptv1', vn)
         df_copy0[vn] = df[vn]
@@ -273,6 +277,10 @@ def calc_exptv(df, vn_list, mean0):
             df_copy1 = df_copy0.ix[mask_prev, :].copy()
 
             df_prev = df_copy1.ix[mask_target, :].copy()
+
+            if vn != 'connectionType':
+                mean0 = mean0[mask_prev]
+                mean0 = mean0[~mask_target]
 
             vn_group = df_prev.groupby(vn)
             group_sum = vn_group['label'].aggregate(np.sum)
