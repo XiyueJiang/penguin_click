@@ -260,8 +260,6 @@ def calc_exptv(df, vn_list, mean0=None):
 
         if vn == 'connectionType':
             mean0 = mean0
-        else:
-            mean0 = df.exptv_connectionType.values
 
         print('exptv1', vn)
         df_copy0[vn] = df[vn]
@@ -279,8 +277,8 @@ def calc_exptv(df, vn_list, mean0=None):
             df_prev = df_copy1.ix[mask_target, :].copy()
 
             if vn != 'connectionType':
-                mean0 = mean0[mask_prev]
-                mean0 = mean0[~mask_target]
+                mean0 = df.exptv_connectionType[mask_prev]
+                mean0 = mean0[~mask_target].values
 
             vn_group = df_prev.groupby(vn)
             group_sum = vn_group['label'].aggregate(np.sum)
