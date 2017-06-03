@@ -1,14 +1,14 @@
 # -*-coding:utf-8-*-
 
 import os
-from my_tools import plot_utils
+# from my_tools import plot_utils
 
 import joblib
 import numpy as np
 import pandas as pd
 from script import utils
 
-from pyspark import SparkContext, sql
+# from pyspark import SparkContext, sql
 
 """
 os.environ['PYSPARK_SUBMIT_ARGS']="--master local[*] pyspark-shell"

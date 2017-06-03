@@ -350,6 +350,7 @@ def pair_interaction(df, column_pairs):
         df[vn] = pair_c
         df[vn] = df[vn].astype('category').values.codes
 
+
 def generate_submission(df):
     submission_path = "/mnt/trident/xiaolan/python/Contest/penguin_click/pred_output/" + time.strftime("%Y%m%d",time.gmtime())
     os.system("mkdir " + submission_path)

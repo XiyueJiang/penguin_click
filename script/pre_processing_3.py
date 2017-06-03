@@ -4,7 +4,7 @@ import os
 
 import joblib
 
-from script import utils
+import utils
 
 
 def main():
@@ -26,11 +26,21 @@ def main():
                     ('positionID', 'appCategory'),
                     ('positionID', 'connectionType'),
                     ('positionID', 'advertiserID'),
-                    ('campaignID', 'age'),
+                    ('camgaignID', 'age'),
                     ('appCategory', 'appID'),
                     ('appCategory', 'sitesetID'),
                     ('appCategory', 'advertiserID'),
-                    ('gender', 'creativeID')]
+                    ('gender', 'creativeID'),
+                    ('positionID_advertiserID', 'connectionType'),
+                    ('positionID_creativeID','advertiserID'),
+                    ('positionID_connectionType', 'creativeID'),
+                    ('positionID_connectionType', 'camgaignID'),
+                    ('positionID_appCategory','creativeID'),
+                    ('positionID_advertiserID', 'appCategory'),
+                    ('connectionType_positionType', 'positionType'),
+                    ('connectionType_sitesetID', 'positionID'),
+                    ('gender_creativeID', 'positionID'),
+                    ('positionID_creativeID','0_category_count')]
 
     all_data = joblib.load(os.path.join('../processed', 'all_data_p1'))
     utils.pair_interaction(all_data, column_pairs)
