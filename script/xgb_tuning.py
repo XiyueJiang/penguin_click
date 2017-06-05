@@ -5,24 +5,21 @@ import numpy as np
 import joblib
 import os
 
-os.sys.path.append("/mnt/trident/xiaolan/python/Contest/penguin_click/script")
-os.chdir('/mnt/trident/xiaolan/python/Contest/penguin_click/script')
-
 
 def xgbCv(train, features, eta):
     # prepare xgb parameters
     params = {
-        'objective':'binary:logistic',
+        'objective': 'binary:logistic',
         "booster": "gbtree",
         "eval_metric": "logloss",
         "tree_method": 'auto',
         "silent": 1,
         "eta": eta,
-        "max_depth": 5,
-        "min_child_weight": 4,
+        "max_depth": 4,
+        "min_child_weight": 5,
         "subsample": 0.95,
-        "colsample_bytree": 0.95,
-        "gamma": 0
+        "colsample_bytree": 0.7,
+        "gamma": 0.1
     }
 
     cvScore = kFoldValidation(train, features, params)
@@ -32,14 +29,14 @@ def xgbCv(train, features, eta):
 
 def bayesOpt(train, features):
     ranges = {
-        'eta': (0.01,0.011),
+        "eta": (0.01, 0.015)
     }
 
     # proxy through a lambda to be able to pass train and features
     optFunc = lambda eta: \
         xgbCv(train, features, eta)
     bo = BayesianOptimization(optFunc, ranges)
-    bo.maximize(init_points=10, n_iter=100)
+    bo.maximize(init_points=20, n_iter= 20)
     bestlogloss = round((-1.0 * bo.res['max']['max_val']), 6)
 
     print("\n Best logloss found: %f" % bestlogloss)
@@ -47,9 +44,9 @@ def bayesOpt(train, features):
 
 
 def kFoldValidation(train, features, xgbParams, target='label'):
-    kf = KFold(n_splits=4, shuffle=True)
+    kf = KFold(n_splits=3, shuffle=True)
     fold_score = []
-    print("eta: %f" % (xgbParams['eta']))
+    print("Current period learning rate: %f" % xgbParams['eta'])
     for train_index, cv_index in kf.split(train):
         # split train/validation
         X_train, X_valid = train[features].as_matrix()[train_index], train[features].as_matrix()[cv_index]
@@ -58,7 +55,7 @@ def kFoldValidation(train, features, xgbParams, target='label'):
         dvalid = xgb.DMatrix(X_valid, y_valid)
 
         watchlist = [(dtrain, 'train'), (dvalid, 'eval')]
-        gbm = xgb.train(xgbParams, dtrain, 5000, evals=watchlist, early_stopping_rounds=100)
+        gbm = xgb.train(xgbParams, dtrain, 10000, evals=watchlist, early_stopping_rounds=50)
 
         score = gbm.best_score
         fold_score.append(score)
@@ -117,10 +114,9 @@ def kFoldValidation(train, features, xgbParams, target='label'):
 #     return np.mean(bag_score)
 
 
-all_data = joblib.load('../processed/all_data_p2')
+all_data = joblib.load('../processed/all_data_p3')
 instance_id = joblib.load('../processed/instance_id')
 train_data = all_data.ix[all_data.click_day < 31]
-
 
 drop_list = set(["diff_"+str(i)+"_category" for i in [19, 21, 25, 28, 26,15, 11, 8, 7, 6, 23, 20, 5, 4, 17, 13, 12]])
 xgb_feature = list(set(all_data.columns) - set(["clickTime", "conversionTime", "label", "click_min", "click_day"]) - drop_list)

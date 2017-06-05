@@ -4,19 +4,21 @@ import pandas as pd
 import xgboost as xgb
 import os
 import time
+import utils
+
 
 os.sys.path.append("/mnt/trident/xiaolan/python/Contest/penguin_click/script")
 os.chdir('/mnt/trident/xiaolan/python/Contest/penguin_click/script')
 
 
-all_data = joblib.load('../processed/all_data_p2')
+all_data = joblib.load('../processed/all_data_p3')
 instance_id = joblib.load('../processed/instance_id')
 
 cvrt_value = all_data['label']
 day_values = all_data['click_day']
 
-drop_list = set(["diff_"+str(i)+"_category" for i in range(31)]) - set(["diff_"+str(i)+"_category" for i in [27,28,20,21,22,25]])
-xgb_feature = list(set(all_data.columns) - set(["clickTime", "conversionTime", "label", "click_min", "click_day","telecomsOperator","exptv_residence","marriageStatus","appPlatform","userID"]) - drop_list)
+drop_list = set(["diff_"+str(i)+"_category" for i in [19, 21, 25, 28, 26,15, 11, 8, 7, 6, 23, 20, 5, 4, 17, 13, 12]])
+xgb_feature = list(set(all_data.columns) - set(["clickTime", "conversionTime", "label", "click_min", "click_day"]) - drop_list)
 
 
 def logloss(pred, y, weight=None):
@@ -76,9 +78,6 @@ for idx in [0, 1, 2, 3]:
 
 
 
-
-
-
 def generate_pred_with_validation(all_data, xgb_param, xgb_feature, n_trees, day_test=31):
     filter1 = np.logical_and(day_values >= 17, day_values < day_test)
     filter_v1 = day_values == day_test
@@ -126,23 +125,23 @@ def generate_pred_output(all_data, xgb_param, xgb_feature, n_trees, day_test=31)
     return predv_xgb
 
 
-n_trees = 4100
+n_trees = 5000
 
 
 xgb_param = {
-    'objective': 'binary:logistic',
-    "booster": "gbtree",
-    "eval_metric": "logloss",
-    "tree_method": 'auto',
-    "silent": 1,
-    "eta": 0.0175,
-    "max_depth": 6,
-    "min_child_weight": 5,
-    "subsample": 0.9,
-    "colsample_bytree": 0.5,
-    "gamma": 0,
-    "seed": 999
-}
+        'objective':'binary:logistic',
+        "booster": "gbtree",
+        "eval_metric": "logloss",
+        "tree_method": 'auto',
+        "silent": 1,
+        "eta": 0.015,
+        "max_depth": 5,
+        "min_child_weight": 4,
+        "subsample": 0.95,
+        "colsample_bytree": 0.95,
+        "gamma": 0,
+        "seed": 777
+    }
 
 output = generate_pred_output(all_data, xgb_param,xgb_feature, n_trees, day_test=31)
 
@@ -164,10 +163,7 @@ def pred_with_different_seed(xgb_param):
     return pred_output_dict
 
 
-
-submission_output = pd.DataFrame({"prob": pred_output, "instanceID": instance_id})
-
-
+submission_output = pd.DataFrame({"prob": output, "instanceID": instance_id})
 submission_output['prob'] = submission_output.mean(axis=1)
 
 
@@ -176,8 +172,8 @@ def generate_submission(df, instance_id):
     df.columns = ['instanceID', 'prob']
     submission_path = "/mnt/trident/xiaolan/python/Contest/penguin_click/pred_output/" + time.strftime("%Y%m%d",time.gmtime())
     if not os.path.exists(submission_path):
-        os.system("mkdir " + submission_path, exist_ok=True)
-    df.to_csv(os.path.join(submission_path, 'submission', time.strftime("_%H%M", time.gmtime()), '.csv'), index=False)
+        os.system("mkdir " + submission_path)
+    df.to_csv(os.path.join(submission_path, 'submission'+ time.strftime("_%H%M", time.gmtime()) + '.csv'), index=False)
 
 
-generate_submission(output, instance_id)
+utils.generate_submission(output, instance_id)
