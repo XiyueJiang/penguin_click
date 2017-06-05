@@ -29,7 +29,7 @@ def xgbCv(train, features, eta):
 
 def bayesOpt(train, features):
     ranges = {
-        "eta": (0.01, 0.015)
+        "eta": (0.01, 0.01)
     }
 
     # proxy through a lambda to be able to pass train and features

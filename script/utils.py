@@ -351,7 +351,17 @@ def pair_interaction(df, column_pairs):
         df[vn] = df[vn].astype('category').values.codes
 
 
-def generate_submission(df):
+def logloss(pred, y, weight=None):
+    if weight is None:
+        weight = np.ones(y.size)
+    pred = np.maximum(1e-7, np.minimum(1 - 1e-7, pred))
+    return - np.sum(weight * (y * np.log(pred) + (1 - y) * np.log(1 - pred))) / np.sum(weight)
+
+
+def generate_submission(df, instance_id):
+    df = pd.concat([pd.DataFrame({"instanceID": instance_id}), pd.DataFrame(df)], axis=1)
+    df.columns = ['instanceID', 'prob']
     submission_path = "/mnt/trident/xiaolan/python/Contest/penguin_click/pred_output/" + time.strftime("%Y%m%d",time.gmtime())
-    os.system("mkdir " + submission_path)
-    df.to_csv(os.path.join(submission_path, 'submission.csv'), index=False)
+    if not os.path.exists(submission_path):
+        os.system("mkdir " + submission_path)
+    df.to_csv(os.path.join(submission_path, 'submission'+ time.strftime("_%H%M", time.gmtime()) + '.csv'), index=False)
